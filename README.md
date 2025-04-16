@@ -54,3 +54,12 @@ Apakah kamu ingin menjual sekarang? (y/n):
 
 ## 🧾 Lisensi
 Open-source dan bebas dimodifikasi. Gunakan dengan tanggung jawab pribadi.
+
+
+## Dukung Saya di Trakteer
+
+Scan QR code berikut untuk memberikan dukungan:
+
+![Trakteer QR](./trakteer-qr.png)
+
+Atau klik langsung: [https://trakteer.id/Syalpra/link](https://trakteer.id/Syalpra/link)
