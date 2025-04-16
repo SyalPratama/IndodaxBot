@@ -8,12 +8,12 @@ import urllib.parse
 API_KEY = 'API_KEY_KAMU'
 API_SECRET = 'SECRET_API_KEY_KAMU'
 API_URL = 'https://indodax.com/tapi/'
-PAIR = 'elf_idr' # Ganti dengan Coin yang kamu beli
-STOP_LOSS_PERCENT = 5  # Turun 5% dari harga tertinggi
-BUY_PRICE = 25000      # Harga beli
+PAIR = 'btc_idr' # Ganti dengan coin yang kamu beli
+STOP_LOSS_PERCENT = 5  # Turun 5% dari harga live saat bot dijalankan
 
 MANUAL_TIMESTAMP = 1578304294000
 MANUAL_RECVWINDOW = 1578303937000
+BUY_PRICE = 100000  # Harga beli (untuk hitung profit)
 
 def generate_signature(params, secret):
     postdata = urllib.parse.urlencode(params)
@@ -81,50 +81,43 @@ def sell_all():
             coin: str(amount)
         }
         result = indodax_api('trade', params)
-
-        if 'return' in result:
-            ret = result['return']
-            sold_key = f'sold_{coin}'
-            remain_key = f'remain_{coin}'
-
-            print("\n📦 Hasil Penjualan:")
-            print(f"  - Jumlah terjual    : {ret.get(sold_key, 0)} {coin.upper()}")
-            print(f"  - Diterima (IDR)    : Rp {int(ret.get('receive_rp', 0)):,}")
-            print(f"  - Fee               : {ret.get('fee', 0)}")
-            print(f"  - Sisa saldo koin   : {ret.get(remain_key, ret.get('remain', '0'))}")
-            print(f"  - Order ID          : {ret.get('order_id')}")
-            print(f"  - Client Order ID   : {ret.get('client_order_id', '-')}")
-        else:
-            print("❌ Gagal melakukan penjualan:", result)
+        print("Hasil jual:", result)
     else:
         print("Tidak ada saldo untuk dijual.")
 
 def main():
     print("Bot Trailing Stop-Loss dimulai...")
     peak_price = get_current_price()
+    stop_price = peak_price * (1 - STOP_LOSS_PERCENT / 100)
     print(f"Harga awal: Rp {peak_price:,.0f}")
 
     while True:
         try:
             current_price = get_current_price()
-            stop_price = peak_price * (1 - STOP_LOSS_PERCENT / 100)
+
+            if current_price > peak_price:
+                peak_price = current_price
+                stop_price = peak_price * (1 - STOP_LOSS_PERCENT / 100)
+                print("📈 Harga naik - Peak price & stop-loss diperbarui.")
 
             print(f"\nHarga Sekarang: Rp {current_price:,.0f} | Peak: Rp {peak_price:,.0f} | Stop-Loss: Rp {stop_price:,.0f}")
             show_realtime_balance()
 
-            if current_price > peak_price:
-                peak_price = current_price
-                print("📈 Harga naik - Peak price diperbarui.")
-
-            elif current_price <= stop_price:
-                print("🚨 Harga turun ke bawah batas trailing stop-loss. Menjual...")
-                sell_all()
-                break
+            if current_price <= stop_price:
+                print("🚨 Harga menyentuh batas trailing stop-loss!")
+                confirm = input("Apakah kamu ingin menjual sekarang? (y/n): ").strip().lower()
+                if confirm == 'y':
+                    sell_all()
+                    break
+                else:
+                    print("Penjualan dibatalkan. Bot akan lanjut memantau harga...")
 
             time.sleep(5)
         except KeyboardInterrupt:
             print("\n⛔ Bot dihentikan manual.")
             break
+
+
 
 if __name__ == '__main__':
     main()
